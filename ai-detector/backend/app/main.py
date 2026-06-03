@@ -23,12 +23,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-app.include_router(analysis.router, prefix="/analysis", tags=["Analysis"])
-app.include_router(files.router, prefix="", tags=["Files"])
-app.include_router(history.router, prefix="/history", tags=["History"])
+# Mount routes under /api/v1
+api_v1 = FastAPI()
+api_v1.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+api_v1.include_router(analysis.router, prefix="/analysis", tags=["Analysis"])
+api_v1.include_router(files.router, prefix="", tags=["Files"])
+api_v1.include_router(history.router, prefix="/history", tags=["History"])
+
+app.mount("/api/v1", api_v1)
 
 
 @app.get("/")
 async def health_check():
     return {"status": "ok", "service": settings.project_name}
+
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "version": "1.0.0"}
