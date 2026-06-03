@@ -192,12 +192,15 @@ ai-detector/backend/
 - `POST /api/v1/auth/login` - User login
 - `POST /api/v1/auth/logout` - User logout
 - `GET /api/v1/auth/me` - Current user profile
+- `PATCH /api/v1/auth/me` - Update current user profile
+- `DELETE /api/v1/auth/me` - Delete current user account
 
 **Analysis:**
 - `POST /api/v1/analysis/ai-detect` - AI detection
 - `POST /api/v1/analysis/plagiarism` - Plagiarism check
 - `POST /api/v1/analysis/summarize` - Text summary
 - `POST /api/v1/analysis/full-report` - Full analysis
+- `POST /api/v1/analysis/full-report/download` - Downloadable Markdown report
 
 **Files:**
 - `POST /api/v1/upload` - Upload file
@@ -327,5 +330,5 @@ logging.basicConfig(
 
 ---
 
-**Last Updated:** January 2024  
+**Last Updated:** June 2026  
 **Version:** 1.0.0

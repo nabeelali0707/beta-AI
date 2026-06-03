@@ -3,6 +3,8 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -15,6 +17,8 @@ class SupabaseService:
 
         if supabase_url and supabase_key:
             self._initialize_client()
+        else:
+            self._init_fallback()
 
     def _initialize_client(self):
         try:
@@ -154,6 +158,22 @@ class SupabaseService:
             logger.error(f"Error saving file metadata: {e}")
             return ""
 
+    async def upload_file(self, path: str, content: bytes, content_type: str) -> Optional[str]:
+        """Upload a file to Supabase Storage and return a public URL when available."""
+        if self.use_fallback:
+            return None
+
+        try:
+            self.client.storage.from_(settings.storage_bucket).upload(
+                path,
+                content,
+                {"content-type": content_type, "upsert": "true"},
+            )
+            return self.client.storage.from_(settings.storage_bucket).get_public_url(path)
+        except Exception as e:
+            logger.error(f"Error uploading file to Supabase Storage: {e}")
+            return None
+
     async def get_user_files(self, user_id: str) -> List[Dict]:
         """Get user's uploaded files"""
         if self.use_fallback:
@@ -180,5 +200,7 @@ class SupabaseService:
             return []
 
 
-# Global instance (will be initialized in main.py with env vars)
-supabase_service = SupabaseService()
+supabase_service = SupabaseService(
+    settings.supabase_url,
+    settings.supabase_service_role_key or settings.supabase_anon_key,
+)

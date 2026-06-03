@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SummaryType(str, Enum):
@@ -11,24 +11,24 @@ class SummaryType(str, Enum):
 
 
 class AIAnalysisRequest(BaseModel):
-    title: Optional[str] = "AI Detection"
-    text: str
+    title: Optional[str] = Field(default="AI Detection", max_length=255)
+    text: str = Field(min_length=1)
 
 
 class PlagiarismRequest(BaseModel):
-    title: Optional[str] = "Plagiarism Check"
-    text: str
+    title: Optional[str] = Field(default="Plagiarism Check", max_length=255)
+    text: str = Field(min_length=1)
 
 
 class SummaryRequest(BaseModel):
-    title: Optional[str] = "Text Summary"
-    text: str
+    title: Optional[str] = Field(default="Text Summary", max_length=255)
+    text: str = Field(min_length=1)
     summary_type: SummaryType = SummaryType.short
 
 
 class FullReportRequest(BaseModel):
-    title: Optional[str] = "Full Analysis Report"
-    text: str
+    title: Optional[str] = Field(default="Full Analysis Report", max_length=255)
+    text: str = Field(min_length=1)
 
 
 class SentenceAnalysis(BaseModel):

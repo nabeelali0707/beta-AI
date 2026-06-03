@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import UploadedFile, User
@@ -30,13 +31,19 @@ async def upload_file(
 
         # Extract text from file
         file_info = await file_handler_service.extract_text_from_file(content, file.filename)
+        storage_path = f"{current_user.id}/{file_info['file_id']}{file_info['extension']}"
+        storage_url = await supabase_service.upload_file(
+            storage_path,
+            content,
+            file_info["content_type"],
+        )
 
         # Save file metadata to database
         uploaded_file = UploadedFile(
             user_id=current_user.id,
             file_name=file.filename,
             file_type=file_info["extension"],
-            file_url=f"/api/v1/files/{file_info['file_id']}",
+            file_url=storage_url or f"/api/v1/files/{file_info['file_id']}",
         )
 
         db.add(uploaded_file)
@@ -68,7 +75,9 @@ async def get_user_files(
     """Get user's uploaded files"""
     try:
         result = await db.execute(
-            UploadedFile.__table__.select().where(UploadedFile.user_id == current_user.id).order_by(UploadedFile.uploaded_at.desc())
+            select(UploadedFile)
+            .where(UploadedFile.user_id == current_user.id)
+            .order_by(UploadedFile.uploaded_at.desc())
         )
         files = result.scalars().all()
 

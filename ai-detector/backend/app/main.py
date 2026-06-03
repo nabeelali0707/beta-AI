@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.core.logging import configure_logging
+from app.db.base import Base
+from app.db.session import engine
 from app.routes import analysis, auth, files, history
 
 configure_logging()
@@ -23,14 +25,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount routes under /api/v1
-api_v1 = FastAPI()
-api_v1.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-api_v1.include_router(analysis.router, prefix="/analysis", tags=["Analysis"])
-api_v1.include_router(files.router, prefix="", tags=["Files"])
-api_v1.include_router(history.router, prefix="/history", tags=["History"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(analysis.router, prefix="/api/v1/analysis", tags=["Analysis"])
+app.include_router(files.router, prefix="/api/v1", tags=["Files"])
+app.include_router(history.router, prefix="/api/v1/history", tags=["History"])
 
-app.mount("/api/v1", api_v1)
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    if settings.auto_create_tables:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
 
 @app.get("/")

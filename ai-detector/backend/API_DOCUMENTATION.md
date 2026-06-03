@@ -153,6 +153,19 @@ Get current user profile. Requires authentication.
 #### POST /auth/logout
 Logout user.
 
+#### PATCH /auth/me
+Update the current user's profile. Requires authentication.
+
+**Request:**
+```json
+{
+  "full_name": "Jane Doe"
+}
+```
+
+#### DELETE /auth/me
+Delete the current user's account and related records. Requires authentication.
+
 ---
 
 ### Analysis
@@ -241,6 +254,11 @@ Generate comprehensive analysis report.
   "text": "Your text content here..."
 }
 ```
+
+#### POST /analysis/full-report/download
+Generate the same comprehensive analysis as a downloadable Markdown report.
+
+**Response:** `text/markdown` with a `Content-Disposition` attachment header.
 
 **Response:**
 ```json
@@ -472,4 +490,4 @@ For issues or questions:
 ---
 
 **Version:** 1.0.0  
-**Last Updated:** January 2024
+**Last Updated:** June 2026

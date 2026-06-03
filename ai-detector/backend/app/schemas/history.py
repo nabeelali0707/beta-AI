@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class HistoryItem(BaseModel):
@@ -12,8 +12,7 @@ class HistoryItem(BaseModel):
     metadata: Optional[str] = None
     created_at: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class HistoryList(BaseModel):

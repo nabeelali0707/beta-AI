@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Analysis, User
@@ -22,7 +23,7 @@ async def get_history(
     """Get user's analysis history"""
     try:
         result = await db.execute(
-            Analysis.__table__.select()
+            select(Analysis)
             .where(Analysis.user_id == current_user.id)
             .order_by(Analysis.created_at.desc())
             .offset(skip)
@@ -38,7 +39,7 @@ async def get_history(
                     "ai_score": a.ai_score,
                     "plagiarism_score": a.plagiarism_score,
                     "summary": a.summary,
-                    "metadata": a.metadata,
+                    "metadata": a.metadata_json,
                     "created_at": a.created_at.isoformat(),
                 }
                 for a in analyses
@@ -59,7 +60,7 @@ async def get_history_item(
     """Get specific analysis"""
     try:
         result = await db.execute(
-            Analysis.__table__.select().where(
+            select(Analysis).where(
                 (Analysis.id == history_id) & (Analysis.user_id == current_user.id)
             )
         )
@@ -74,7 +75,7 @@ async def get_history_item(
             "ai_score": analysis.ai_score,
             "plagiarism_score": analysis.plagiarism_score,
             "summary": analysis.summary,
-            "metadata": analysis.metadata,
+            "metadata": analysis.metadata_json,
             "created_at": analysis.created_at.isoformat(),
         }
 
@@ -94,7 +95,7 @@ async def delete_history_item(
     """Delete analysis"""
     try:
         result = await db.execute(
-            Analysis.__table__.select().where(
+            select(Analysis).where(
                 (Analysis.id == history_id) & (Analysis.user_id == current_user.id)
             )
         )

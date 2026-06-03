@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     project_name: str = "Beta-AI Backend"
     environment: str = Field("development", env="ENVIRONMENT")
     database_url: str = Field("sqlite+aiosqlite:///./test.db", env="DATABASE_URL")
+    auto_create_tables: bool = Field(True, env="AUTO_CREATE_TABLES")
     supabase_url: str = Field("", env="SUPABASE_URL")
     supabase_anon_key: str = Field("", env="SUPABASE_ANON_KEY")
     supabase_service_role_key: str = Field("", env="SUPABASE_SERVICE_ROLE_KEY")
@@ -24,6 +25,15 @@ class Settings(BaseSettings):
     storage_bucket: str = Field("beta-ai-files", env="STORAGE_BUCKET")
     max_upload_size_mb: int = Field(50, env="MAX_UPLOAD_SIZE_MB")
     allowed_origins: List[str] = Field(["*"], env="ALLOWED_ORIGINS")
+
+    @field_validator("database_url")
+    @classmethod
+    def normalize_async_database_url(cls, value: str) -> str:
+        if value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if value.startswith("postgres://"):
+            return value.replace("postgres://", "postgresql+asyncpg://", 1)
+        return value
 
     class Config:
         env_file = ".env"

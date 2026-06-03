@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class FileUploadResponse(BaseModel):
@@ -8,5 +8,4 @@ class FileUploadResponse(BaseModel):
     file_url: str
     uploaded_at: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

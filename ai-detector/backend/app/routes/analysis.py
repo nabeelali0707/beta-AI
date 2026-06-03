@@ -1,8 +1,7 @@
 import logging
 import json
-from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Analysis, User
@@ -22,7 +21,6 @@ from app.services.ai_detection_service import ai_detection_service
 from app.services.analytics_service import analytics_service
 from app.services.plagiarism_service import plagiarism_service
 from app.services.summarization_service import summarization_service
-from app.services.supabase_service import supabase_service
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -43,7 +41,7 @@ async def detect_ai_content(
             user_id=current_user.id,
             title=request.title,
             ai_score=result["ai_score"],
-            metadata=json.dumps(result),
+            metadata_json=json.dumps(result),
         )
         db.add(analysis)
         await db.commit()
@@ -76,7 +74,7 @@ async def detect_plagiarism(
             user_id=current_user.id,
             title=request.title,
             plagiarism_score=result["plagiarism_score"],
-            metadata=json.dumps(result),
+            metadata_json=json.dumps(result),
         )
         db.add(analysis)
         await db.commit()
@@ -109,7 +107,7 @@ async def summarize_text(
             user_id=current_user.id,
             title=request.title,
             summary=result["summary"],
-            metadata=json.dumps(result),
+            metadata_json=json.dumps(result),
         )
         db.add(analysis)
         await db.commit()
@@ -147,7 +145,7 @@ async def generate_full_report(
             ai_score=ai_result["ai_score"],
             plagiarism_score=plagiarism_result["plagiarism_score"],
             summary=summary_result["summary"],
-            metadata=json.dumps(
+            metadata_json=json.dumps(
                 {
                     "ai": ai_result,
                     "plagiarism": plagiarism_result,
@@ -171,3 +169,42 @@ async def generate_full_report(
     except Exception as e:
         logger.error(f"Error generating full report: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Report generation failed")
+
+
+@router.post("/full-report/download")
+async def download_full_report(
+    request: FullReportRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate a downloadable Markdown report"""
+    report = await generate_full_report(request, current_user, db)
+    analytics = report["analytics"]
+
+    content = "\n".join(
+        [
+            f"# {request.title}",
+            "",
+            "## Scores",
+            f"- AI probability score: {report['ai_score']:.2%}",
+            f"- Plagiarism score: {report['plagiarism_score']:.2f}%",
+            "",
+            "## Summary",
+            report["summary"],
+            "",
+            "## Writing Analytics",
+            f"- Word count: {analytics.get('word_count', 0)}",
+            f"- Character count: {analytics.get('character_count', 0)}",
+            f"- Sentence count: {analytics.get('sentence_count', 0)}",
+            f"- Readability score: {analytics.get('readability_score', 0)}",
+            f"- Vocabulary diversity: {analytics.get('vocabulary_diversity', 0)}",
+            f"- Reading time: {analytics.get('reading_time_minutes', 0)} minute(s)",
+        ]
+    )
+
+    filename = f"{request.title.lower().replace(' ', '-')[:60] or 'beta-ai-report'}.md"
+    return Response(
+        content=content,
+        media_type="text/markdown",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

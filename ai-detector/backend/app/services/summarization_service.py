@@ -55,7 +55,7 @@ class SummarizationService:
         import re
 
         sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-        bullets = "\n".join([f"• {s.strip()}" for s in sentences[:5] if s.strip()])
+        bullets = "\n".join([f"- {s.strip()}" for s in sentences[:5] if s.strip()])
         return bullets
 
     async def summarize(self, text: str, summary_type: str = "short") -> Dict:
