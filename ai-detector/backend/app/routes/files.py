@@ -58,6 +58,7 @@ async def upload_file(
             "file_type": uploaded_file.file_type,
             "file_url": uploaded_file.file_url,
             "uploaded_at": uploaded_file.uploaded_at.isoformat(),
+            "extracted_text": file_info["text"],
         }
 
     except ValueError as e:

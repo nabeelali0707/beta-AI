@@ -7,5 +7,6 @@ class FileUploadResponse(BaseModel):
     file_type: str
     file_url: str
     uploaded_at: str
+    extracted_text: str
 
     model_config = ConfigDict(from_attributes=True)
